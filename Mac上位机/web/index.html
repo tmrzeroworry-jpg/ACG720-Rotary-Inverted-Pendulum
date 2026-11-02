@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="zh-CN"
+  ><head
+    ><meta charset="UTF-8" /><meta
+      name="viewport"
+      content="width=device-width,initial-scale=1" /><title>倒立摆 · 网页控制台 UI02</title
+    ><link rel="stylesheet" href="/style.css" /><link
+      rel="stylesheet"
+      href="/controls.css" /><script src="/controls.js" defer></script
+    ><script src="/app.js" defer></script
+    ><link rel="stylesheet" href="/trajectory.css" /><script
+      src="/trajectory_math.js"
+      defer
+    ></script
+    ><script src="/trajectory.js" defer></script
+    ><script src="/flip.js" defer></script
+    ><script src="/return_motion.js" defer></script></head
+  ><body>
+    <aside
+      ><a class="brand" href="#"
+        ><span class="brandmark">⌁</span
+        ><span>倒立摆实验台<small>ROTARY PENDULUM LAB</small></span></a
+      ><div class="nav-label">工作空间</div
+      ><a href="#overview" class="nav active"><span>◉</span> 实验监控</a
+      ><a href="#trials" class="nav"><span>▤</span> 试验记录</a
+      ><button id="help" class="nav"><span>ⓘ</span> 连接与说明</button
+      ><div class="side-bottom"
+        ><span class="tiny-dot"></span> 本机运行 · 数据留在电脑<br /><small
+          >UI02 · Mac 串口上位机</small
+        ></div
+      ></aside
+    >
+    <main id="overview"
+      ><header
+        ><div
+          ><div class="eyebrow">ACG720 / UI02</div><h1>旋转倒立摆 <span>实验监控</span></h1
+          ><p class="sub">自动起摆 · 定点定位 · 恒速旋转 · 八档正弦运动</p></div
+        ><div class="head-right"
+          ><span id="modeBadge" class="badge muted">未连接</span
+          ><span id="linkBadge" class="badge muted">加载中</span
+          ><button id="fullscreen" title="展示模式">⛶ 展示</button></div
+        ></header
+      >
+      <section class="connection panel"
+        ><div class="connection-main"
+          ><div class="selector"
+            ><label for="sourceMode">数据来源</label
+            ><select id="sourceMode"
+              ><option value="replay">记录回放 / 导入</option
+              ><option value="live" selected>USB 串口实时监测</option></select
+            ></div
+          ><div id="replaySelectBox" class="selector wide"
+            ><label for="recordSelect">回放记录</label
+            ><select id="recordSelect"></select></div
+          ><div id="serialSelectBox" class="selector wide hidden"
+            ><label for="portSelect">USB 串口 · 8N1</label
+            ><select id="portSelect"
+              ><option value="">未检测到板子</option></select
+            ></div
+          ><div id="baudBox" class="selector hidden"
+            ><label for="baudSelect">串口速率</label
+            ><select id="baudSelect"
+              ><option value="115200">115200 · UI02 / TR01</option
+              ><option value="1000000">1000000 · RF02</option></select
+            ></div
+          ><button id="refresh" class="hidden">↻ 刷新</button
+          ><button id="loadRecord" class="primary">载入记录</button
+          ><button id="connect" class="primary hidden">连接并记录</button
+          ><button id="disconnect" class="hidden">断开读取</button
+          ><label class="import-button"
+            >导入 .bin<input id="importFile" type="file" accept=".bin" hidden /></label></div
+        ><div class="source-note"
+          ><span id="sourceLabel">正在读取本机服务…</span
+          ><span id="quality">CRC — · 有效帧 —</span></div
+        ></section
+      >
+      <div id="notice" class="notice hidden" role="status"></div
+      ><div id="error" class="error hidden" role="alert"></div>
+      <div id="replayBar" class="playback"
+        ><button id="play" class="play-button" title="播放或暂停">Ⅱ</button
+        ><button id="restart" title="回到记录起点">↤</button
+        ><span id="replayTime" class="mono">00:00</span
+        ><input
+          id="seek"
+          type="range"
+          min="0"
+          max="100"
+          value="0"
+          step="0.01"
+          aria-label="回放进度"
+        /><span id="replayDuration" class="mono">00:00</span
+        ><select id="speed" aria-label="回放速度"
+          ><option value="0.25">0.25×</option
+          ><option value="0.5">0.5×</option
+          ><option value="1" selected>1× 实时速度</option
+          ><option value="2">2×</option
+          ><option value="4">4×</option></select
+        ></div
+      >
+      <section class="panel control-panel" id="controlPanel" aria-label="运行控制">
+        <div class="control-header"
+          ><div><h2>运行控制</h2><p class="control-status">板上 S0 始终急停 · 拨码无需操作</p></div
+          ><span class="badge muted" id="controlBadge">未连接</span></div
+        >
+        <div class="control-actions"
+          ><button id="controlClaim" class="primary" disabled>启用网页控制</button>
+          <label
+            >起摆方式<select id="startMethod" disabled
+              ><option value="0">快速起摆（试验）</option
+              ><option value="1">原版起摆</option></select
+            ></label
+          >
+          <button id="controlStart" class="primary" disabled>起摆</button
+          ><button id="controlStop" class="web-stop" disabled>立即停止</button
+          ><button id="controlRelease" class="control-release" disabled>释放控制</button></div
+        >
+        <div class="control-divider"></div
+        ><div class="task-tabs" role="tablist" aria-label="横臂任务"
+          ><button type="button" role="tab" aria-selected="true" data-task-tab="position"
+            >定点</button
+          ><button type="button" role="tab" aria-selected="false" data-task-tab="spin">恒速</button
+          ><button type="button" role="tab" aria-selected="false" data-task-tab="sine"
+            >正弦</button
+          ></div
+        >
+        <div class="task-fields" data-task-fields="position"
+          ><label
+            >目标位置（平衡参考）<select id="taskPosition"
+              ><option value="0">0°</option
+              ><option value="1">45°</option
+              ><option value="2">90°</option
+              ><option value="3">135°</option
+              ><option value="4">180°</option
+              ><option value="5">225°</option
+              ><option value="6">270°</option
+              ><option value="7">315°</option></select
+            ></label
+          ></div
+        >
+        <div class="task-fields" data-task-fields="spin" hidden
+          ><label
+            >方向<select id="spinDirection"
+              ><option value="0">正向</option
+              ><option value="1">反向</option></select
+            ></label
+          ><label
+            >速度<select id="spinSpeed"
+              ><option value="0">90°/s · 慢速</option
+              ><option value="1">180°/s · 快速</option></select
+            ></label
+          ></div
+        >
+        <div class="task-fields" data-task-fields="sine" hidden
+          ><label
+            >运动形式<select id="sinePattern"
+              ><option value="0">往复 · 0.25 Hz</option
+              ><option value="4">往复 · 0.50 Hz</option
+              ><option value="2">单向正向 · 0.25 Hz</option
+              ><option value="6">单向正向 · 0.50 Hz</option
+              ><option value="1">单向正向 · 0.75 Hz</option
+              ><option value="5">单向反向 · 0.25 Hz</option
+              ><option value="3">单向反向 · 0.50 Hz</option
+              ><option value="7">单向反向 · 0.75 Hz</option></select
+            ></label
+          ></div
+        >
+        <div class="task-footer"
+          ><span class="control-current" id="controlCurrent">横臂任务：未运行</span
+          ><div class="control-actions"
+            ><button id="taskExecute" class="primary" disabled>执行任务</button
+            ><button id="taskHold" disabled>停止横臂任务</button></div
+          ></div
+        >
+        <p id="controlMessage" class="control-message" role="status">连接UI02后启用网页控制。</p>
+      </section>
+      <section class="top-grid"
+        ><div class="panel pose-panel"
+          ><div class="section-title"
+            ><h2>姿态概览</h2><span id="stage" class="stage">待机</span></div
+          ><div class="pose-wrap"
+            ><canvas id="pose" aria-label="摆杆侧视与横臂俯视示意"></canvas
+            ><div class="pose-watermark" id="poseWatermark">历史实测回放</div></div
+          ><div class="pose-legend"
+            ><span><i class="dot pole"></i>摆杆</span><span><i class="dot arm"></i>横臂</span></div
+          ></div
+        >
+        <div class="stats-area"
+          ><div class="stats-grid"
+            ><article class="stat panel"
+              ><div class="stat-label"><i class="dot pole"></i>摆杆角度</div
+              ><div class="stat-value"><b id="poleVal">—</b><span>°</span></div></article
+            ><article class="stat panel"
+              ><div class="stat-label"><i class="dot arm"></i>横臂角度</div
+              ><div class="stat-value"><b id="armVal">—</b><span>°</span></div
+              ><button
+                id="resetArm"
+                class="arm-reset"
+                disabled
+                title="把当前横臂位置标记为显示0°；只改显示，不复位FPGA或发送运动指令"
+                >Reset 横臂归零</button
+              ></article
+            ><article class="stat panel"
+              ><div class="stat-label">累计稳摆</div
+              ><div class="stat-value"><b id="balanceVal">—</b><span id="durationVal">s</span></div
+              ><div class="progress"><div id="balanceProgress"></div></div></article></div></div
+      ></section>
+
+      <details class="advanced-motion" id="moreActions"
+        ><summary>更多动作 · 自绘曲线 / 同向翻转 / 受控回落</summary
+        ><div class="advanced-content"
+          ><section class="panel trajectory-panel" id="trajectory">
+            <div class="section-title"
+              ><div
+                ><h2>自绘速度曲线</h2><span id="trajPointCount">16 / 16 个点</span
+                ><p>运行中可修改 · 横臂速度 °/s</p></div
+              ><span id="trajectoryState" class="badge muted">编辑预览</span></div
+            >
+            <div class="trajectory-tools">
+              <label
+                >速度限幅
+                <input id="trajVmax" type="number" min="1" max="360" value="180" step="1" />
+                °/s</label
+              >
+              <label
+                >加速度上限
+                <input id="trajAmax" type="number" min="6" max="720" value="360" step="1" />
+                °/s²</label
+              >
+              <label
+                >总时长
+                <input id="trajDuration" type="number" min="1" max="120" value="15" step="1" />
+                s</label
+              >
+              <label><input id="trajAuto" type="checkbox" checked />实时应用有效修改</label>
+            </div>
+            <div class="trajectory-canvas"
+              ><canvas id="trajectoryCanvas" aria-label="可拖动控制点的时间速度曲线"></canvas
+            ></div>
+            <div class="trajectory-legend"><span class="requested">● 绘制速度</span></div>
+            <p id="trajAcceleration">实际加速度估计 — °/s²</p
+            ><div class="trajectory-actions"
+              ><button id="trajExample">载入16点示例</button><button id="trajClear">清空</button
+              ><button id="trajApply">检查并应用</button
+              ><button id="trajStart" class="primary">开始曲线</button
+              ><button id="trajStop" class="trajectory-stop">减速停止曲线</button></div
+            >
+            <div id="trajMessage" class="trajectory-message" role="status"
+              >拖动16个控制点，首尾速度保持0。双击可删除，空白处可添加，最多16个点。</div
+            >
+            <details
+              ><summary>精确编辑 / 导入导出</summary
+              ><textarea id="trajPoints" rows="5" aria-label="时间速度控制点JSON"></textarea
+              ><div class="trajectory-actions"
+                ><button id="trajImport">应用文本控制点</button
+                ><button id="trajExport">导出曲线JSON</button></div
+              ></details
+            >
+            <p class="trajectory-instructions"
+              >先点击“起摆”，稳摆后点击“开始曲线”。编辑不会自动启动。S0仍是整机急停；“减速停止曲线”保留稳摆。关闭网页或通信超时后不会自动恢复。实时修改从当前播放时刻衔接，板端执行加速度限制。</p
+            >
+          </section>
+          <section class="panel" id="returnPanel"
+            ><div class="section-title"
+              ><h2>受控回落</h2><span id="lifeState" class="badge muted">待机</span></div
+            >
+
+            <div class="trajectory-actions"
+              ><button class="primary" id="returnStart" disabled>回到下垂（受控）</button
+              ><button id="returnCancel" disabled>中止动作</button></div
+            >
+            <p id="returnMessage">先启用网页控制并完成起摆。</p
+            ><p class="lifecycle-metrics"
+              ><span id="lifeElapsed">用时 — s</span> · <span id="lifeTurns">有效换向 —</span></p
+            ><p id="downReference">下垂参考未就绪</p>
+            <p
+              >先停横臂任务，再主动收能、反馈消摆，静止确认后关闭驱动。板上S0始终立即急停；Reset仍只用于显示归零。</p
+            ></section
+          >
+          <section class="panel trajectory-panel" id="flipPanel"
+            ><div class="section-title"
+              ><h2>同向翻转 360°</h2><span id="flipState" class="badge muted">未启动</span></div
+            ><p>从直立出发，同向经过最低点，再回顶部捕获。利用下落动能同向续转，每次只执行一圈。</p
+            ><div class="trajectory-actions"
+              ><label
+                >补能方案
+                <select id="flipVariant"
+                  ><option value="0">A · 255°开始收能</option
+                  ><option value="1">B · 270°开始收能</option></select
+                ></label
+              >
+              <button id="flipPositive" class="primary" disabled>正向翻转一次</button
+              ><button id="flipNegative" disabled>反向翻转一次</button
+              ><button id="flipCancel" class="trajectory-stop" disabled>中止翻转</button></div
+            ><div class="trajectory-message" id="flipMessage" role="status"
+              >需要UI02固件；先停止速度曲线，再进入稳定直立。</div
+            ><div class="trajectory-tools"
+              ><span id="flipProgress">累计转角 — °</span
+              ><span id="flipElapsed">用时 — s</span></div
+            ><p
+              >方向按电位器展开计数定义，主翻转行程锁定方向；顶部捕获后允许小幅纠正。未完成整圈、主行程反向或超时均不记成功。S0仍为整机急停。</p
+            ></section
+          ></div
+        ></details
+      ><section class="panel charts-panel"
+        ><div class="section-title"
+          ><div><h2>控制过程</h2><p>时间轴同步 · 保留原始遥测变化</p></div
+          ><div class="chart-options"
+            ><button id="zoomArm">横臂：动态放大</button><button id="zoomPole">摆角 0–15°</button
+            ><select id="window" aria-label="曲线时间窗"
+              ><option value="10">最近 10 秒</option
+              ><option value="20" selected>最近 20 秒</option
+              ><option value="40">最近 40 秒</option></select
+            ><button id="freeze">冻结图表</button></div
+          ></div
+        ><div id="chartBox"
+          ><canvas id="charts" aria-label="摆杆角度、横臂位移和横臂速度时间曲线"></canvas
+          ><div id="hover" class="hover hidden"></div></div
+        ><div class="charts-note"
+          ><span id="chartNote">记录回放 · 不代表当前板子状态</span
+          ><span>摆杆角度 · 横臂位移 · 横臂速度</span></div
+        ></section
+      >
+      <section class="panel trials-panel" id="trials"
+        ><div class="section-title"
+          ><div><h2>试验记录</h2><p>随已接收或已播放的稳摆帧更新</p></div
+          ><div class="export-actions"
+            ><button id="openHistory" class="primary">历史实验数据导出</button
+            ><a class="button" href="/api/export" download>统计CSV</a></div
+          ></div
+        ><div class="table-scroll"
+          ><table
+            ><thead
+              ><tr
+                ><th>试验</th><th>控制 / 滤波</th><th>稳摆计时</th><th>控制偏角 RMS</th
+                ><th>累计跟随范围</th><th>当前 / 结束状态</th></tr
+              ></thead
+            ><tbody id="trialRows"
+              ><tr><td colspan="6" class="empty">载入记录或连接串口后显示试验统计</td></tr></tbody
+            ></table
+          ></div
+        ><div class="table-note" id="tableNote"
+          >RMS按已接收的稳摆遥测样本计算，使用修正后的软件零点；未收到的数据不补造。正常到时结束与异常退出分开显示。</div
+        ></section
+      >
+      <footer
+        ><div
+          ><span class="mini-label">原始 ADC</span><b id="rawVal" class="mono">—</b
+          ><span class="mini-label">横臂计数（圈内）</span><b id="encoderVal" class="mono">—</b
+          ><span class="mini-label">软件参考</span><b id="upVal" class="mono">—</b></div
+        ><div id="recordingLabel">本机回放 · 未占用串口</div></footer
+      > </main
+    ><dialog id="helpDialog"
+      ><h2>UI02 · 网页控制</h2
+      ><ol
+        ><li>先连接USB串口，再点击“启用网页控制”。接管本身不启动电机；起摆需单独点击。</li
+        ><li
+          >网页起摆对应S1；定点、恒速、正弦对应S2/S3/S4。网页参数直接发给FPGA，不受八位拨码影响。接管期间板上S1～S4忽略，S0始终有效；释放后恢复板上操作。</li
+        ><li
+          >“停止横臂任务”让目标速度渐降为0并保持参考；“立即停止”停止整机并释放网页控制，摆杆可能下落。受控回落位于“更多动作”。</li
+        ><li
+          >仅稳摆时允许横臂任务；曲线、翻转和回落互斥。先停止横臂任务，再发起更多动作。参数修改只预选，点击执行才生效。</li
+        ><li
+          >网页关闭、串口中断或电脑失去心跳，FPGA独立在500ms续期超时后停止。恢复连接需重新启用，不自动续跑。电脑死机时可直接按板上S0。</li
+        ><li
+          >位置以控制算法平衡参考为准。Reset仅改变显示零点，不影响定点位置。未接板、回放或旧固件禁止运动控制。</li
+        ><li
+          >本版沿用TR06起摆、稳摆、翻转与回落控制算法；快速起摆与受控回落仍属试验功能，未将先前失败问题视为已解决。</li
+        ></ol
+      ><button id="closeHelp" class="primary">知道了</button></dialog
+    >
+    <dialog id="historyDialog"
+      ><h2>历史实验数据导出</h2
+      ><div class="history-field"
+        ><label for="historyRecord">串口记录</label
+        ><select id="historyRecord"></select></div
+      ><div class="export-actions"
+        ><button id="historyRefresh">刷新记录</button
+        ><button id="historyIndex">分析记录</button></div
+      ><div class="history-field"
+        ><label for="historyTrial">选择试验</label
+        ><select id="historyTrial" disabled
+          ><option>先选择记录并分析</option></select
+        ></div
+      ><p id="historyStatus" role="status"></p
+      ><progress id="historyProgress" max="100" value="0" class="hidden"></progress
+      ><p class="history-description"
+        >导出逐帧编码器、电位器和时间戳，包含连续角度、一圈内角度及摆杆方向，Windows可直接使用。</p
+      ><div class="export-actions"
+        ><button id="historyExport" class="primary" disabled>生成数据包</button
+        ><a id="historyDownload" class="button primary hidden" download>下载ZIP</a
+        ><button id="historyClose">关闭</button></div
+      ></dialog
+    ></body
+  ></html
+>

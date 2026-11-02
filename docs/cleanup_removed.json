@@ -1,0 +1,23 @@
+{
+  "fpga/src/ir_trial_keys.v": "UI02顶层及测试均未实例化的暂停红外模块",
+  "fpga/src/nec_receiver.v": "UI02顶层及测试均未实例化的暂停红外模块",
+  "tools/validate_tr02.py": "旧版专用验证入口，由当前版本统一离线验证替代",
+  "tools/validate_tr05.py": "旧版专用验证入口，由当前版本统一离线验证替代",
+  "tools/validate_ui01.py": "旧版专用验证入口，由当前版本统一离线验证替代",
+  "tools/analyze_bottom_feedback.py": "旧的未辨识物理模型分析，与当前源代码构建和验证无依赖",
+  "Mac上位机/tests/browser_check.cjs": "依赖个人Codex安装路径的旧浏览器截图脚本，不属于运行或自动回归依赖",
+  "docs/historical_uncoupled_model": "历史版本设计/模型/结果材料，原始包中完整保留",
+  "docs/WEXE_changes.md": "历史版本设计/模型/结果材料，原始包中完整保留",
+  "docs/TR05设计与验证.md": "历史版本设计/模型/结果材料，原始包中完整保留",
+  "docs/README_WEXH_基线原文.md": "历史版本设计/模型/结果材料，原始包中完整保留",
+  "docs/REPORT_20261018_quiet.md": "历史版本设计/模型/结果材料，原始包中完整保留",
+  "docs/RESULTS_3way.md": "历史版本设计/模型/结果材料，原始包中完整保留",
+  "docs/WEXD_spec.md": "历史版本设计/模型/结果材料，原始包中完整保留",
+  "tests/trans_trace_0_1_1.csv": "RTL测试生成的轨迹，可由当前回归重新生成",
+  "tests/trans_trace_1_1_1.csv": "RTL测试生成的轨迹，可由当前回归重新生成",
+  "tests/trans_trace_0_0_1.csv": "RTL测试生成的轨迹，可由当前回归重新生成",
+  "tests/trans_trace_1_0_1.csv": "RTL测试生成的轨迹，可由当前回归重新生成",
+  "tests/trans_trace_0_1_-1.csv": "RTL测试生成的轨迹，可由当前回归重新生成",
+  "tests/trans_trace_1_1_-1.csv": "RTL测试生成的轨迹，可由当前回归重新生成",
+  "tools/validate_ui02.py": "由tools/validate.py替代；完整继承当前回归并加入历史/显示断言，临时副本运行"
+}

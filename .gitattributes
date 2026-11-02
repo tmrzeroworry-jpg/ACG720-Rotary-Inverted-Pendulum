@@ -1,0 +1,18 @@
+* text=auto
+*.py text eol=lf
+*.v text eol=lf
+*.tcl text eol=lf
+*.cst text eol=lf
+*.sdc text eol=lf
+*.gprj text eol=lf
+*.md text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.command text eol=lf
+*.bin binary
+*.png binary
+*.zip binary
+
+# Preserve the verified vendor-port file byte for byte (original CRLF).
+fpga/src/wheeltec_balance.v -text

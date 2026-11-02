@@ -1,0 +1,121 @@
+{
+  "passed": true,
+  "active_rtl_modules_unchanged": 28,
+  "rtl_sha256": {
+    "ab4_top.v": "45055a583b963c85ef69e8cbc35febaa14efa93daca240f05bcd055a30162fe4",
+    "ads1115_angle_guard.v": "2ccf416768136590de91d626fccb672baf41834bd429878d40e1e341a70a80b5",
+    "ads1115_reader.v": "39a27d1d6cd958ec211fadda899c18d8f0946aae8f3fb0286e0d01ff6cf1cd61",
+    "arm_task.v": "460afbde36cb0750fb5d76f2552d9b27e863732576993951c3a8530eea5c2a99",
+    "balance_rate_estimator.v": "f05b266947100608f07e327005829b22cee77747f90e0c4ce1c2f5ec0c5f1c65",
+    "encoder_quadrature.v": "88a4dbe35eb8af47ed12fccb3a8a392d8bc2597ae32dd7e7c7dc184022748061",
+    "flip_angle_tracker.v": "e76b6453c54747191a3aca2dfb8ee27c6e6d80409d246429a25f6e67308a1813",
+    "flip_maneuver.v": "ba26e13da77d75426c6fa17f47465f5c951d17a84a6d24b1b65d5b4492893ef6",
+    "flip_output_guard.v": "b42a91a64da1dce4b1d862580b6846c479a0f007fbeb5db405c95e31b0a38e39",
+    "key_filter.v": "a6f05290c7435c94b3262b0559f2ed491480535da2890e43e9c52502db61e81e",
+    "lqr_feedback.v": "350aac068228a0278e8613aa0e4d85fe5b5443d9358cf08bea8ca039ac5d50c8",
+    "lqr_notch.v": "d0eddcd1b24f27046e6f78ed469c258e4eefa53dcf27fb3ef13d768e54c31bec",
+    "lqr_output_pipeline.v": "edb91185f233d727e45933cb8ba77b883656b2d214cb9a46c231a3466aa44e44",
+    "lqr_rate_estimator.v": "77100279d54ae089a699f271277521d6e1c5fe58f5a7056e3c9ef4b31dc13489",
+    "lqr_tracking_estimator.v": "ecc68f1ea648e83de3be3d54838486294c2323751a21c61043de69edef834520",
+    "motor_tb6612.v": "1b3f059480e0576fbfd2bd36779ff27ac1c1999f4adb733cc84b864516dbe179",
+    "one_euro_filter.v": "3b2a0abb8ca0156d565981f9a2b777124b9e57a5a900e56a9f9f47ac99ad13ad",
+    "remote_control.v": "406c99fc6dc17197a668001432d195c36247ede9c3edb28a466ecd6c9d922c62",
+    "swing_controller.v": "1bf8a8850fd0a6e6b27b4f0bdc3627e33ff0784016783d09be2c10210d581bce",
+    "telemetry_ab4.v": "fada4b62f2011061b972e2283610b39711d4177a6764f78304e8d9c880cdb1ef",
+    "test_selector.v": "fc7149337b11c7353d8835ba07e6865d149b40b1e54973b463a5137d90ff6d3e",
+    "transition_angle_guard.v": "aff0866370816aeacd4af1c628f71c98b78c45db4a78fd5e882474a57a481700",
+    "transition_control.v": "55ef2921e7f76960f615bcd8e2f42bf1d36bdef612a2a53c43dd1f9450ae8198",
+    "trial_statistics.v": "37a79bf10fa60dc741fc3e623b285b6058d3a998fc3c32a1c3aac233664c54bf",
+    "uart_rx_byte.v": "f1ff5383736a17253d548f01c0e9a64e5197155b068768b733720925a122614a",
+    "uart_tx_byte.v": "32f25d637b2749ec74d1f308d7914ed7de41b120b73e40e5dca271d70282d550",
+    "velocity_stream.v": "95b515f20c6d0c44b68fbf5217293a4d9e9c2f54a3125eaef7b1cab3ebd6b75b",
+    "wheeltec_balance.v": "82d5f1725f0fc53000879c5716f6e19d2e8f79f70a4ad29c94907a07dfd14be5"
+  },
+  "host_ast": {
+    "controls.py": "Python AST unchanged except listed unused imports / module description",
+    "flip.py": "Python AST unchanged except listed unused imports / module description",
+    "history_export.py": "Python AST unchanged except listed unused imports / module description",
+    "launch.py": "Python AST unchanged except listed unused imports / module description",
+    "protocol_vendor.py": "Python AST unchanged except listed unused imports / module description",
+    "return_motion.py": "Python AST unchanged except listed unused imports / module description",
+    "server.py": "Python AST unchanged except listed unused imports / module description",
+    "stop_server.py": "Python AST unchanged except listed unused imports / module description",
+    "telemetry.py": "Python AST unchanged except listed unused imports / module description",
+    "trajectory.py": "Python AST unchanged except listed unused imports / module description"
+  },
+  "constraints_unchanged": true,
+  "real_replay_samples_unchanged": true,
+  "javascript": {
+    "passed": true,
+    "files": [
+      "app.js",
+      "controls.js",
+      "flip.js",
+      "return_motion.js",
+      "trajectory.js",
+      "trajectory_math.js"
+    ],
+    "allowed_changes": [
+      "remove unused signed/sample/message",
+      "remove unused trace key branch after overlay removal"
+    ]
+  },
+  "offline_validation": {
+    "passed": true,
+    "steps": 66,
+    "python_tests": 90,
+    "javascript_assertion_files": 4,
+    "hardware_access": false
+  },
+  "vendor_build": {
+    "passed": true,
+    "inputs_unchanged": true,
+    "timing": {
+      "clock_frequency_MHz": 50,
+      "actual_board_clock_MHz": 50,
+      "constraint_period_ns": 19.5,
+      "constraint_frequency_MHz": 51.282051282051285,
+      "worst_setup_slack_at_board_20ns_ns": 0.514,
+      "slack_note": "worst_setup_slack_ns refers to PNR constraint; actual oscillator remains20ns",
+      "setup_violations": 0,
+      "hold_violations": 0,
+      "worst_setup_slack_ns": 0.014,
+      "worst_hold_slack_ns": 0.247,
+      "timing_passed": true,
+      "path_examples": [
+        {
+          "type": "SETUP",
+          "slack_ns": 0.014,
+          "source": "controller/task_gen/n677_s",
+          "destination": "controller/task_gen/move_final_q16_47_s0"
+        },
+        {
+          "type": "SETUP",
+          "slack_ns": 0.028,
+          "source": "controller/last_good_angle_0_s0",
+          "destination": "controller/s1_a_6_s0"
+        },
+        {
+          "type": "SETUP",
+          "slack_ns": 0.029,
+          "source": "controller/task_gen/n677_s",
+          "destination": "controller/task_gen/move_final_q16_46_s0"
+        }
+      ]
+    },
+    "bitstream_sha256": "d479f11b302c85a16bfd0bef528f5ffd7432b57d07c5b39f5b53a878cfb06315",
+    "configuration_equal_except_creation_comment": true
+  },
+  "visual_comparison": {
+    "widths": [
+      1680,
+      1200,
+      950,
+      800,
+      600,
+      390
+    ],
+    "same_dom_geometry_and_fonts": true,
+    "source": "read-only replay preview; no physical serial connection"
+  }
+}

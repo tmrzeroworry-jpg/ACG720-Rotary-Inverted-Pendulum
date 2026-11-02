@@ -1,0 +1,86 @@
+[
+  {
+    "id": "WE20_trial1.bin",
+    "label": "旧版WE20实测 · 原滤波 · 第1组",
+    "kind": "历史真实实测",
+    "build": "WE20",
+    "date": "2026-10-16",
+    "trial": 1,
+    "frames": 2616,
+    "duration_s": 26.15,
+    "sha256": "016cb478446966b3581eb2bb37455fe0312d97a6aa85222ef323e13ef8fb61b7",
+    "source_sha256": "d5b64218ab882d678755acc649964c1e332d8fca9abcfd7f034a80f7036a8a0f",
+    "source_start": 1543594,
+    "source_end": 1826122,
+    "quality": {
+      "valid_frames": 2616,
+      "IR_event_frames": 0,
+      "bad_frames": 0,
+      "discarded_bytes": 0,
+      "trailing_bytes": 0
+    }
+  },
+  {
+    "id": "WE20_trial2.bin",
+    "label": "旧版WE20实测 · 摆杆1€快速 · 第2组",
+    "kind": "历史真实实测",
+    "build": "WE20",
+    "date": "2026-10-16",
+    "trial": 2,
+    "frames": 2528,
+    "duration_s": 25.27,
+    "sha256": "2c8bd8e141b29938c11839b2c5df2c8f3f2b166d754734345a393bf3c486d258",
+    "source_sha256": "d5b64218ab882d678755acc649964c1e332d8fca9abcfd7f034a80f7036a8a0f",
+    "source_start": 1942330,
+    "source_end": 2215354,
+    "quality": {
+      "valid_frames": 2528,
+      "IR_event_frames": 0,
+      "bad_frames": 0,
+      "discarded_bytes": 0,
+      "trailing_bytes": 0
+    }
+  },
+  {
+    "id": "WE20_trial3.bin",
+    "label": "旧版WE20实测 · 横臂1€快速 · 第3组",
+    "kind": "历史真实实测",
+    "build": "WE20",
+    "date": "2026-10-16",
+    "trial": 3,
+    "frames": 2563,
+    "duration_s": 25.62,
+    "sha256": "a7d73eea456fca9d377fd67cc08ea09c3c40ef25bc5d87d8618b969acca42480",
+    "source_sha256": "d5b64218ab882d678755acc649964c1e332d8fca9abcfd7f034a80f7036a8a0f",
+    "source_start": 2551450,
+    "source_end": 2828254,
+    "quality": {
+      "valid_frames": 2563,
+      "IR_event_frames": 0,
+      "bad_frames": 0,
+      "discarded_bytes": 0,
+      "trailing_bytes": 0
+    }
+  },
+  {
+    "id": "WE20_trial4.bin",
+    "label": "旧版WE20实测 · 双通道1€快速 · 第4组",
+    "kind": "历史真实实测",
+    "build": "WE20",
+    "date": "2026-10-16",
+    "trial": 4,
+    "frames": 2678,
+    "duration_s": 26.77,
+    "sha256": "0c55f953b9aeaed0a71337b2aa5b137cbb8fd960f644fed7212ac30b2c416229",
+    "source_sha256": "d5b64218ab882d678755acc649964c1e332d8fca9abcfd7f034a80f7036a8a0f",
+    "source_start": 3008938,
+    "source_end": 3298162,
+    "quality": {
+      "valid_frames": 2678,
+      "IR_event_frames": 0,
+      "bad_frames": 0,
+      "discarded_bytes": 0,
+      "trailing_bytes": 0
+    }
+  }
+]

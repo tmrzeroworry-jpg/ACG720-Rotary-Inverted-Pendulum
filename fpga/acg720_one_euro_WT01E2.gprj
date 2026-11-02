@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Project>
+  <Template>FPGA</Template>
+  <Version>5</Version>
+  <Device name="GW5AT-138C" pn="GW5AT-LV138PG484AC1/I0">gw5at138c-007</Device>
+  <FileList>
+    <File path="src/remote_control.v" type="file.verilog" enable="1" />
+    <File path="src/ab4_top.v" type="file.verilog" enable="1" />
+    <File path="src/ads1115_reader.v" type="file.verilog" enable="1" />
+    <File path="src/balance_rate_estimator.v" type="file.verilog" enable="1" />
+    <File path="src/encoder_quadrature.v" type="file.verilog" enable="1" />
+    <File path="src/key_filter.v" type="file.verilog" enable="1" />
+    <File path="src/motor_tb6612.v" type="file.verilog" enable="1" />
+    <File path="src/swing_controller.v" type="file.verilog" enable="1" />
+    <File path="src/telemetry_ab4.v" type="file.verilog" enable="1" />
+    <File path="src/test_selector.v" type="file.verilog" enable="1" />
+    <File path="src/trial_statistics.v" type="file.verilog" enable="1" />
+    <File path="src/uart_tx_byte.v" type="file.verilog" enable="1" />
+    <File path="constraints/acg720_swing_up.cst" type="file.cst" enable="1" />
+    <File path="constraints/acg720_swing_up.sdc" type="file.sdc" enable="1" />
+    <File path="src/ads1115_angle_guard.v" type="file.verilog" enable="1" />
+    <File path="src/lqr_feedback.v" type="file.verilog" enable="1" />
+    <File path="src/lqr_rate_estimator.v" type="file.verilog" enable="1" />
+    <File path="src/lqr_output_pipeline.v" type="file.verilog" enable="1" />
+    <File path="src/lqr_notch.v" type="file.verilog" enable="1" />
+    <File path="src/lqr_tracking_estimator.v" type="file.verilog" enable="1" />
+    <File path="src/wheeltec_balance.v" type="file.verilog" enable="1" />
+    <File path="src/one_euro_filter.v" type="file.verilog" enable="1" />
+    <File path="src/arm_task.v" type="file.verilog" enable="1" />
+    <File path="src/uart_rx_byte.v" type="file.verilog" enable="1" />
+    <File path="src/velocity_stream.v" type="file.verilog" enable="1" />
+    <File path="src/flip_maneuver.v" type="file.verilog" enable="1" />
+    <File path="src/flip_output_guard.v" type="file.verilog" enable="1" />
+    <File path="src/flip_angle_tracker.v" type="file.verilog" enable="1" />
+    <File path="src/transition_control.v" type="file.verilog" enable="1" />
+    <File path="src/transition_angle_guard.v" type="file.verilog" enable="1" />
+  </FileList>
+  <Option TopModule="ab4_top" UseIOAsRegularIo="0" />
+</Project>

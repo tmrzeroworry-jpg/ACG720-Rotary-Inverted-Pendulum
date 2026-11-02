@@ -1,0 +1,29 @@
+name: Offline regression
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install RTL simulator
+        run: sudo apt-get update && sudo apt-get install -y iverilog
+      - name: Validate without hardware
+        run: python tools/validate.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: offline-validation
+          path: reports/offline_validation.json
+          if-no-files-found: ignore

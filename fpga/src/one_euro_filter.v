@@ -1,0 +1,501 @@
+// OneEuro experiment: author formula, bounded integer-Hz cutoff LUT.
+// dx=(x-last_filtered_x)*Fs, derivative LPF, fc=fmin+beta*abs(dx_filtered).
+// Filtered position Q16; velocity=finite difference of filtered position/Fs.
+// Current input is captured atomically. Cancel/stale/jumps prime current, no kick.
+module one_euro_filter #(
+ parameter integer SAMPLE_HZ=1000, PERIOD=0, MAX_STEP=400,
+ parameter integer FAST_MIN=80, QUIET_MIN=40, FAST_MAX=200, QUIET_MAX=160,
+ parameter integer FAST_BETA_Q24=167772, QUIET_BETA_Q24=83886,
+ parameter integer DERIV_ALPHA_Q20=166304
+)(
+ input wire clk,rst_n,enable,valid,sample,input wire[1:0]variant,
+ input wire signed[31:0]x,
+ output reg busy,done,ready,jump,overflow,
+ output reg signed[63:0]filtered_q16,output reg signed[31:0]velocity,
+ output reg[7:0]cutoff_hz
+);
+ reg[3:0]phase;reg[1:0]last_variant,variant_r;reg signed[31:0]sample_x;reg signed[63:0]raw_r,step_r;
+ reg signed[31:0]previous_raw;
+ reg signed[63:0]delta_q,derivative_q,derivative_next,dx_q,diff_q,increment_q,next_q;
+ reg signed[95:0]product,frequency_product;
+ reg[20:0]alpha_q;reg[7:0]f_work;
+ wire quiet=((busy?variant_r:variant)==2);
+ wire[31:0]min_f=quiet?QUIET_MIN:FAST_MIN;
+ wire[31:0]max_f=quiet?QUIET_MAX:FAST_MAX;
+ wire[31:0]beta_q=quiet?QUIET_BETA_Q24:FAST_BETA_Q24;
+ function signed[63:0]wrap_q;
+  input signed[63:0]v;
+  begin
+   if(PERIOD!=0 && v>(64'sd65536*PERIOD/2))wrap_q=v-64'sd65536*PERIOD;
+   else if(PERIOD!=0 && v<(-64'sd65536*PERIOD/2))wrap_q=v+64'sd65536*PERIOD;
+   else wrap_q=v;
+  end
+ endfunction
+ function signed[63:0]rounded_product;
+  input signed[95:0]p;
+  begin rounded_product=p<0 ? -(((-p)+96'sd524288)>>>20) : (p+96'sd524288)>>>20;end
+ endfunction
+ function[20:0]alpha_for;
+ input[7:0]hz;
+ begin
+ if(SAMPLE_HZ==40)begin
+ case(hz)
+8'd0:alpha_for=21'd0;
+8'd1:alpha_for=21'd142350;
+8'd2:alpha_for=21'd250670;
+8'd3:alpha_for=21'd335860;
+8'd4:alpha_for=21'd404614;
+8'd5:alpha_for=21'd461269;
+8'd6:alpha_for=21'd508762;
+8'd7:alpha_for=21'd549149;
+8'd8:alpha_for=21'd583913;
+8'd9:alpha_for=21'd614152;
+8'd10:alpha_for=21'd640696;
+8'd11:alpha_for=21'd664183;
+8'd12:alpha_for=21'd685113;
+8'd13:alpha_for=21'd703880;
+8'd14:alpha_for=21'd720805;
+8'd15:alpha_for=21'd736146;
+8'd16:alpha_for=21'd750115;
+8'd17:alpha_for=21'd762888;
+8'd18:alpha_for=21'd774613;
+8'd19:alpha_for=21'd785413;
+8'd20:alpha_for=21'd795394;
+8'd21:alpha_for=21'd804646;
+8'd22:alpha_for=21'd813245;
+8'd23:alpha_for=21'd821259;
+8'd24:alpha_for=21'd828745;
+8'd25:alpha_for=21'd835753;
+8'd26:alpha_for=21'd842329;
+8'd27:alpha_for=21'd848510;
+8'd28:alpha_for=21'd854332;
+8'd29:alpha_for=21'd859824;
+8'd30:alpha_for=21'd865014;
+8'd31:alpha_for=21'd869927;
+8'd32:alpha_for=21'd874583;
+8'd33:alpha_for=21'd879003;
+8'd34:alpha_for=21'd883204;
+8'd35:alpha_for=21'd887202;
+8'd36:alpha_for=21'd891011;
+8'd37:alpha_for=21'd894644;
+8'd38:alpha_for=21'd898114;
+8'd39:alpha_for=21'd901430;
+8'd40:alpha_for=21'd904604;
+8'd41:alpha_for=21'd907643;
+8'd42:alpha_for=21'd910557;
+8'd43:alpha_for=21'd913353;
+8'd44:alpha_for=21'd916038;
+8'd45:alpha_for=21'd918618;
+8'd46:alpha_for=21'd921100;
+8'd47:alpha_for=21'd923489;
+8'd48:alpha_for=21'd925789;
+8'd49:alpha_for=21'd928007;
+8'd50:alpha_for=21'd930146;
+8'd51:alpha_for=21'd932211;
+8'd52:alpha_for=21'd934204;
+8'd53:alpha_for=21'd936131;
+8'd54:alpha_for=21'd937994;
+8'd55:alpha_for=21'd939796;
+8'd56:alpha_for=21'd941540;
+8'd57:alpha_for=21'd943229;
+8'd58:alpha_for=21'd944866;
+8'd59:alpha_for=21'd946452;
+8'd60:alpha_for=21'd947991;
+8'd61:alpha_for=21'd949484;
+8'd62:alpha_for=21'd950934;
+8'd63:alpha_for=21'd952341;
+8'd64:alpha_for=21'd953709;
+8'd65:alpha_for=21'd955038;
+8'd66:alpha_for=21'd956331;
+8'd67:alpha_for=21'd957588;
+8'd68:alpha_for=21'd958812;
+8'd69:alpha_for=21'd960003;
+8'd70:alpha_for=21'd961162;
+8'd71:alpha_for=21'd962292;
+8'd72:alpha_for=21'd963393;
+8'd73:alpha_for=21'd964467;
+8'd74:alpha_for=21'd965513;
+8'd75:alpha_for=21'd966534;
+8'd76:alpha_for=21'd967530;
+8'd77:alpha_for=21'd968502;
+8'd78:alpha_for=21'd969451;
+8'd79:alpha_for=21'd970378;
+8'd80:alpha_for=21'd971284;
+8'd81:alpha_for=21'd972168;
+8'd82:alpha_for=21'd973033;
+8'd83:alpha_for=21'd973878;
+8'd84:alpha_for=21'd974705;
+8'd85:alpha_for=21'd975514;
+8'd86:alpha_for=21'd976305;
+8'd87:alpha_for=21'd977079;
+8'd88:alpha_for=21'd977836;
+8'd89:alpha_for=21'd978578;
+8'd90:alpha_for=21'd979304;
+8'd91:alpha_for=21'd980016;
+8'd92:alpha_for=21'd980713;
+8'd93:alpha_for=21'd981396;
+8'd94:alpha_for=21'd982065;
+8'd95:alpha_for=21'd982721;
+8'd96:alpha_for=21'd983365;
+8'd97:alpha_for=21'd983995;
+8'd98:alpha_for=21'd984614;
+8'd99:alpha_for=21'd985221;
+8'd100:alpha_for=21'd985817;
+8'd101:alpha_for=21'd986401;
+8'd102:alpha_for=21'd986975;
+8'd103:alpha_for=21'd987538;
+8'd104:alpha_for=21'd988092;
+8'd105:alpha_for=21'd988635;
+8'd106:alpha_for=21'd989168;
+8'd107:alpha_for=21'd989692;
+8'd108:alpha_for=21'd990207;
+8'd109:alpha_for=21'd990713;
+8'd110:alpha_for=21'd991210;
+8'd111:alpha_for=21'd991699;
+8'd112:alpha_for=21'd992179;
+8'd113:alpha_for=21'd992652;
+8'd114:alpha_for=21'd993117;
+8'd115:alpha_for=21'd993574;
+8'd116:alpha_for=21'd994023;
+8'd117:alpha_for=21'd994465;
+8'd118:alpha_for=21'd994900;
+8'd119:alpha_for=21'd995328;
+8'd120:alpha_for=21'd995750;
+8'd121:alpha_for=21'd996165;
+8'd122:alpha_for=21'd996573;
+8'd123:alpha_for=21'd996975;
+8'd124:alpha_for=21'd997371;
+8'd125:alpha_for=21'd997760;
+8'd126:alpha_for=21'd998144;
+8'd127:alpha_for=21'd998523;
+8'd128:alpha_for=21'd998895;
+8'd129:alpha_for=21'd999262;
+8'd130:alpha_for=21'd999624;
+8'd131:alpha_for=21'd999980;
+8'd132:alpha_for=21'd1000331;
+8'd133:alpha_for=21'd1000677;
+8'd134:alpha_for=21'd1001019;
+8'd135:alpha_for=21'd1001355;
+8'd136:alpha_for=21'd1001687;
+8'd137:alpha_for=21'd1002014;
+8'd138:alpha_for=21'd1002336;
+8'd139:alpha_for=21'd1002654;
+8'd140:alpha_for=21'd1002968;
+8'd141:alpha_for=21'd1003278;
+8'd142:alpha_for=21'd1003583;
+8'd143:alpha_for=21'd1003884;
+8'd144:alpha_for=21'd1004181;
+8'd145:alpha_for=21'd1004475;
+8'd146:alpha_for=21'd1004764;
+8'd147:alpha_for=21'd1005050;
+8'd148:alpha_for=21'd1005332;
+8'd149:alpha_for=21'd1005610;
+8'd150:alpha_for=21'd1005885;
+8'd151:alpha_for=21'd1006156;
+8'd152:alpha_for=21'd1006424;
+8'd153:alpha_for=21'd1006689;
+8'd154:alpha_for=21'd1006950;
+8'd155:alpha_for=21'd1007208;
+8'd156:alpha_for=21'd1007463;
+8'd157:alpha_for=21'd1007714;
+8'd158:alpha_for=21'd1007963;
+8'd159:alpha_for=21'd1008208;
+8'd160:alpha_for=21'd1008451;
+8'd161:alpha_for=21'd1008691;
+8'd162:alpha_for=21'd1008928;
+8'd163:alpha_for=21'd1009162;
+8'd164:alpha_for=21'd1009393;
+8'd165:alpha_for=21'd1009622;
+8'd166:alpha_for=21'd1009848;
+8'd167:alpha_for=21'd1010071;
+8'd168:alpha_for=21'd1010292;
+8'd169:alpha_for=21'd1010510;
+8'd170:alpha_for=21'd1010726;
+8'd171:alpha_for=21'd1010940;
+8'd172:alpha_for=21'd1011151;
+8'd173:alpha_for=21'd1011359;
+8'd174:alpha_for=21'd1011566;
+8'd175:alpha_for=21'd1011770;
+8'd176:alpha_for=21'd1011971;
+8'd177:alpha_for=21'd1012171;
+8'd178:alpha_for=21'd1012368;
+8'd179:alpha_for=21'd1012564;
+8'd180:alpha_for=21'd1012757;
+8'd181:alpha_for=21'd1012948;
+8'd182:alpha_for=21'd1013137;
+8'd183:alpha_for=21'd1013325;
+8'd184:alpha_for=21'd1013510;
+8'd185:alpha_for=21'd1013693;
+8'd186:alpha_for=21'd1013874;
+8'd187:alpha_for=21'd1014054;
+8'd188:alpha_for=21'd1014231;
+8'd189:alpha_for=21'd1014407;
+8'd190:alpha_for=21'd1014581;
+8'd191:alpha_for=21'd1014753;
+8'd192:alpha_for=21'd1014924;
+8'd193:alpha_for=21'd1015093;
+8'd194:alpha_for=21'd1015260;
+8'd195:alpha_for=21'd1015425;
+8'd196:alpha_for=21'd1015589;
+8'd197:alpha_for=21'd1015751;
+8'd198:alpha_for=21'd1015912;
+8'd199:alpha_for=21'd1016071;
+8'd200:alpha_for=21'd1016228;
+default:alpha_for=21'd1;
+endcase
+end else begin
+case(hz)
+8'd0:alpha_for=21'd0;
+8'd1:alpha_for=21'd6547;
+8'd2:alpha_for=21'd13013;
+8'd3:alpha_for=21'd19400;
+8'd4:alpha_for=21'd25707;
+8'd5:alpha_for=21'd31939;
+8'd6:alpha_for=21'd38094;
+8'd7:alpha_for=21'd44176;
+8'd8:alpha_for=21'd50185;
+8'd9:alpha_for=21'd56122;
+8'd10:alpha_for=21'd61989;
+8'd11:alpha_for=21'd67787;
+8'd12:alpha_for=21'd73518;
+8'd13:alpha_for=21'd79182;
+8'd14:alpha_for=21'd84780;
+8'd15:alpha_for=21'd90314;
+8'd16:alpha_for=21'd95785;
+8'd17:alpha_for=21'd101194;
+8'd18:alpha_for=21'd106542;
+8'd19:alpha_for=21'd111829;
+8'd20:alpha_for=21'd117058;
+8'd21:alpha_for=21'd122229;
+8'd22:alpha_for=21'd127342;
+8'd23:alpha_for=21'd132400;
+8'd24:alpha_for=21'd137402;
+8'd25:alpha_for=21'd142350;
+8'd26:alpha_for=21'd147244;
+8'd27:alpha_for=21'd152086;
+8'd28:alpha_for=21'd156876;
+8'd29:alpha_for=21'd161615;
+8'd30:alpha_for=21'd166304;
+8'd31:alpha_for=21'd170944;
+8'd32:alpha_for=21'd175535;
+8'd33:alpha_for=21'd180079;
+8'd34:alpha_for=21'd184575;
+8'd35:alpha_for=21'd189025;
+8'd36:alpha_for=21'd193430;
+8'd37:alpha_for=21'd197789;
+8'd38:alpha_for=21'd202104;
+8'd39:alpha_for=21'd206376;
+8'd40:alpha_for=21'd210605;
+8'd41:alpha_for=21'd214792;
+8'd42:alpha_for=21'd218937;
+8'd43:alpha_for=21'd223041;
+8'd44:alpha_for=21'd227104;
+8'd45:alpha_for=21'd231128;
+8'd46:alpha_for=21'd235113;
+8'd47:alpha_for=21'd239058;
+8'd48:alpha_for=21'd242966;
+8'd49:alpha_for=21'd246836;
+8'd50:alpha_for=21'd250670;
+8'd51:alpha_for=21'd254466;
+8'd52:alpha_for=21'd258227;
+8'd53:alpha_for=21'd261953;
+8'd54:alpha_for=21'd265643;
+8'd55:alpha_for=21'd269299;
+8'd56:alpha_for=21'd272921;
+8'd57:alpha_for=21'd276509;
+8'd58:alpha_for=21'd280065;
+8'd59:alpha_for=21'd283587;
+8'd60:alpha_for=21'd287078;
+8'd61:alpha_for=21'd290537;
+8'd62:alpha_for=21'd293965;
+8'd63:alpha_for=21'd297361;
+8'd64:alpha_for=21'd300728;
+8'd65:alpha_for=21'd304064;
+8'd66:alpha_for=21'd307371;
+8'd67:alpha_for=21'd310648;
+8'd68:alpha_for=21'd313897;
+8'd69:alpha_for=21'd317117;
+8'd70:alpha_for=21'd320309;
+8'd71:alpha_for=21'd323473;
+8'd72:alpha_for=21'd326610;
+8'd73:alpha_for=21'd329720;
+8'd74:alpha_for=21'd332803;
+8'd75:alpha_for=21'd335860;
+8'd76:alpha_for=21'd338890;
+8'd77:alpha_for=21'd341896;
+8'd78:alpha_for=21'd344875;
+8'd79:alpha_for=21'd347830;
+8'd80:alpha_for=21'd350760;
+8'd81:alpha_for=21'd353666;
+8'd82:alpha_for=21'd356548;
+8'd83:alpha_for=21'd359405;
+8'd84:alpha_for=21'd362240;
+8'd85:alpha_for=21'd365051;
+8'd86:alpha_for=21'd367839;
+8'd87:alpha_for=21'd370604;
+8'd88:alpha_for=21'd373348;
+8'd89:alpha_for=21'd376069;
+8'd90:alpha_for=21'd378768;
+8'd91:alpha_for=21'd381445;
+8'd92:alpha_for=21'd384102;
+8'd93:alpha_for=21'd386737;
+8'd94:alpha_for=21'd389351;
+8'd95:alpha_for=21'd391945;
+8'd96:alpha_for=21'd394518;
+8'd97:alpha_for=21'd397072;
+8'd98:alpha_for=21'd399605;
+8'd99:alpha_for=21'd402119;
+8'd100:alpha_for=21'd404614;
+8'd101:alpha_for=21'd407089;
+8'd102:alpha_for=21'd409545;
+8'd103:alpha_for=21'd411983;
+8'd104:alpha_for=21'd414402;
+8'd105:alpha_for=21'd416803;
+8'd106:alpha_for=21'd419185;
+8'd107:alpha_for=21'd421550;
+8'd108:alpha_for=21'd423897;
+8'd109:alpha_for=21'd426227;
+8'd110:alpha_for=21'd428539;
+8'd111:alpha_for=21'd430834;
+8'd112:alpha_for=21'd433112;
+8'd113:alpha_for=21'd435374;
+8'd114:alpha_for=21'd437619;
+8'd115:alpha_for=21'd439847;
+8'd116:alpha_for=21'd442059;
+8'd117:alpha_for=21'd444256;
+8'd118:alpha_for=21'd446436;
+8'd119:alpha_for=21'd448601;
+8'd120:alpha_for=21'd450750;
+8'd121:alpha_for=21'd452884;
+8'd122:alpha_for=21'd455003;
+8'd123:alpha_for=21'd457106;
+8'd124:alpha_for=21'd459195;
+8'd125:alpha_for=21'd461269;
+8'd126:alpha_for=21'd463329;
+8'd127:alpha_for=21'd465374;
+8'd128:alpha_for=21'd467405;
+8'd129:alpha_for=21'd469422;
+8'd130:alpha_for=21'd471425;
+8'd131:alpha_for=21'd473414;
+8'd132:alpha_for=21'd475390;
+8'd133:alpha_for=21'd477352;
+8'd134:alpha_for=21'd479300;
+8'd135:alpha_for=21'd481235;
+8'd136:alpha_for=21'd483158;
+8'd137:alpha_for=21'd485067;
+8'd138:alpha_for=21'd486963;
+8'd139:alpha_for=21'd488847;
+8'd140:alpha_for=21'd490718;
+8'd141:alpha_for=21'd492576;
+8'd142:alpha_for=21'd494423;
+8'd143:alpha_for=21'd496257;
+8'd144:alpha_for=21'd498078;
+8'd145:alpha_for=21'd499888;
+8'd146:alpha_for=21'd501686;
+8'd147:alpha_for=21'd503473;
+8'd148:alpha_for=21'd505247;
+8'd149:alpha_for=21'd507011;
+8'd150:alpha_for=21'd508762;
+8'd151:alpha_for=21'd510503;
+8'd152:alpha_for=21'd512232;
+8'd153:alpha_for=21'd513950;
+8'd154:alpha_for=21'd515658;
+8'd155:alpha_for=21'd517354;
+8'd156:alpha_for=21'd519039;
+8'd157:alpha_for=21'd520714;
+8'd158:alpha_for=21'd522379;
+8'd159:alpha_for=21'd524033;
+8'd160:alpha_for=21'd525676;
+8'd161:alpha_for=21'd527309;
+8'd162:alpha_for=21'd528933;
+8'd163:alpha_for=21'd530546;
+8'd164:alpha_for=21'd532149;
+8'd165:alpha_for=21'd533742;
+8'd166:alpha_for=21'd535325;
+8'd167:alpha_for=21'd536899;
+8'd168:alpha_for=21'd538463;
+8'd169:alpha_for=21'd540017;
+8'd170:alpha_for=21'd541562;
+8'd171:alpha_for=21'd543098;
+8'd172:alpha_for=21'd544624;
+8'd173:alpha_for=21'd546142;
+8'd174:alpha_for=21'd547650;
+8'd175:alpha_for=21'd549149;
+8'd176:alpha_for=21'd550639;
+8'd177:alpha_for=21'd552120;
+8'd178:alpha_for=21'd553593;
+8'd179:alpha_for=21'd555057;
+8'd180:alpha_for=21'd556512;
+8'd181:alpha_for=21'd557958;
+8'd182:alpha_for=21'd559396;
+8'd183:alpha_for=21'd560826;
+8'd184:alpha_for=21'd562247;
+8'd185:alpha_for=21'd563661;
+8'd186:alpha_for=21'd565065;
+8'd187:alpha_for=21'd566462;
+8'd188:alpha_for=21'd567851;
+8'd189:alpha_for=21'd569232;
+8'd190:alpha_for=21'd570605;
+8'd191:alpha_for=21'd571970;
+8'd192:alpha_for=21'd573327;
+8'd193:alpha_for=21'd574676;
+8'd194:alpha_for=21'd576018;
+8'd195:alpha_for=21'd577353;
+8'd196:alpha_for=21'd578680;
+8'd197:alpha_for=21'd579999;
+8'd198:alpha_for=21'd581311;
+8'd199:alpha_for=21'd582616;
+8'd200:alpha_for=21'd583913;
+default:alpha_for=21'd1;
+endcase
+end
+ end
+ endfunction
+ always @(posedge clk or negedge rst_n)begin
+  if(!rst_n)begin
+   busy<=0;done<=0;ready<=0;jump<=0;overflow<=0;phase<=0;last_variant<=0;variant_r<=0;sample_x<=0;raw_r<=0;step_r<=0;previous_raw<=0;
+   filtered_q16<=0;velocity<=0;derivative_q<=0;delta_q<=0;derivative_next<=0;dx_q<=0;diff_q<=0;
+   increment_q<=0;next_q<=0;product<=0;frequency_product<=0;alpha_q<=0;cutoff_hz<=0;f_work<=0;
+  end else if(!enable || !valid)begin
+   busy<=0;done<=0;ready<=0;jump<=0;overflow<=0;phase<=0;
+   filtered_q16<=0;previous_raw<=0;velocity<=0;derivative_q<=0;last_variant<=variant;cutoff_hz<=min_f[7:0];
+  end else begin
+   done<=0;jump<=0;overflow<=0;
+   if(sample && !busy)begin sample_x<=x;variant_r<=variant;busy<=1;phase<=1;end
+   else if(busy)begin
+    case(phase)
+     1:begin
+      raw_r<=wrap_q($signed({{32{sample_x[31]}},sample_x})<<<16);
+      step_r<=wrap_q(($signed({{32{sample_x[31]}},sample_x})-$signed({{32{previous_raw[31]}},previous_raw}))<<<16);
+      phase<=2;
+     end
+     2:begin
+      previous_raw<=sample_x;
+      if(!ready || last_variant!=variant_r || step_r>64'sd65536*MAX_STEP || step_r < -64'sd65536*MAX_STEP)begin
+       filtered_q16<=raw_r;velocity<=0;derivative_q<=0;ready<=1;last_variant<=variant_r;done<=1;busy<=0;
+       jump<=ready && (step_r>64'sd65536*MAX_STEP || step_r < -64'sd65536*MAX_STEP);cutoff_hz<=min_f[7:0];phase<=0;
+      end else begin delta_q<=wrap_q(raw_r-filtered_q16);phase<=3;end
+     end
+     3:begin dx_q<=delta_q*SAMPLE_HZ;phase<=4;end
+     4:begin product<=(dx_q-derivative_q)*$signed(DERIV_ALPHA_Q20);phase<=5;end
+     5:begin derivative_next<=derivative_q+rounded_product(product);phase<=6;end
+     6:begin frequency_product<=(derivative_next<0?-derivative_next:derivative_next)*$signed({1'b0,beta_q});phase<=7;end
+     7:begin
+      if((frequency_product>>>40)>=max_f-min_f)f_work<=max_f[7:0];
+      else f_work<=min_f+(frequency_product>>>40);
+      phase<=8;
+     end
+     8:begin alpha_q<=alpha_for(f_work);phase<=9;end
+     9:begin product<=delta_q*$signed({1'b0,alpha_q});phase<=10;end
+     10:begin increment_q<=rounded_product(product);phase<=11;end
+     11:begin
+      filtered_q16<=wrap_q(filtered_q16+increment_q);derivative_q<=derivative_next;
+      velocity<=(increment_q*SAMPLE_HZ)>>>16;cutoff_hz<=f_work;
+      busy<=0;done<=1;phase<=0;
+     end
+     default:begin busy<=0;ready<=0;velocity<=0;phase<=0;overflow<=1;end
+    endcase
+   end
+  end
+ end
+endmodule
