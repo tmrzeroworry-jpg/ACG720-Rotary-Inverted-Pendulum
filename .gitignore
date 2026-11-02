@@ -1,0 +1,30 @@
+# OS / editor / Python
+.DS_Store
+._*
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ruff_cache/
+.pytest_cache/
+.vscode/
+.idea/
+# FPGA tool output and user settings
+fpga/impl/
+*.gprj.user
+*.vcd
+*.fst
+*.vvp
+# Put compiled firmware in GitHub Releases, not source commits.
+bitstreams/
+*.fs
+# Local evidence, capture files and export jobs
+reports/
+Mac上位机/recordings/
+Mac上位机/logs/
+Mac上位机/data/import_*.bin
+Mac上位机/exports/
+# Simulation outputs; committed .bin/.hex files are regression fixtures.
+tests/trans_trace_*.csv
+Mac上位机/tests/*_uart_vectors.hex
+node_modules/
